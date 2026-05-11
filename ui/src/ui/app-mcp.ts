@@ -282,6 +282,29 @@ export function handleMcpSelect(host: AppViewState, key: string | null, opts?: H
 
 export function handleMcpEditConnectionTypeChange(host: AppViewState, type: "stdio" | "url" | "service") {
   host.mcpEditConnectionType = type;
+  const key = host.mcpSelectedKey;
+  if (!key) return;
+  const base = cloneConfigObject(host.configForm ?? host.configSnapshot?.config ?? {});
+  const mcp = (base.mcp as { servers?: Record<string, McpServerEntry> }) ?? {};
+  const servers = mcp.servers ?? {};
+  const entry = servers[key] as Record<string, unknown> | undefined;
+  if (!entry) return;
+  if (type === "stdio") {
+    delete entry.url;
+    delete entry.service;
+    delete entry.serviceUrl;
+  } else if (type === "url") {
+    delete entry.command;
+    delete entry.args;
+    delete entry.service;
+    delete entry.serviceUrl;
+  } else if (type === "service") {
+    delete entry.command;
+    delete entry.args;
+    delete entry.url;
+  }
+  host.configForm = base;
+  host.configFormDirty = true;
 }
 
 export async function handleMcpToggle(host: AppViewState, key: string, enabled: boolean) {
